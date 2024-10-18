@@ -1,0 +1,44 @@
+name: build
+
+on:
+  workflow_call:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+  
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 11
+          distribution: temurin
+      
+      - name: Manage build cache
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-maven-repository
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gradle
+            !~/.gradle/caches/*/plugin-resolution/
+            !~/.m2/repository/org/openapitools/
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+
+      - name: Build
+        run: |
+          ./mvnw \
+            clean \
+            --batch-mode --quiet \
+            install \
+            -Dorg.slf4j.simpleLogger.defaultLogLevel=error
