@@ -1,0 +1,45 @@
+name: release
+
+on:
+  workflow_call:
+
+jobs:
+
+  release:
+
+    runs-on: ubuntu-latest
+
+    steps:
+  
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 11
+          distribution: temurin
+      
+      - name: Manage build cache
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-maven-repository
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gradle
+            !~/.gradle/caches/*/plugin-resolution/
+            !~/.m2/repository/org/openapitools/
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+
+      - name: Deploy to Github Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GA_REGISTRY_ACCESS }}
+        run: |
+          ./mvnw \
+            --batch-mode --quiet \
+            deploy \
+            -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/switstack/3rd-party-openapi-generator

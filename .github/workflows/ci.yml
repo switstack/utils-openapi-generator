@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - 'switstack-main'
+  pull_request:
+  release:
+    types: [ published ]
+
+jobs:
+  build:
+    # Always build except on tag creation
+    if: github.event_name != 'release' && github.ref != 'refs/tags/*'
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+  
+  release:
+    # Release when pushing in 'switstack-main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/switstack-main'
+    needs: [build]
+    uses: ./.github/workflows/release.yml
+    secrets: inherit
